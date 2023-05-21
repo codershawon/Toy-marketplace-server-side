@@ -23,18 +23,10 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    const toyCollection = client
-      .db("toyMarketPlace")
-      .collection("toySuperHero");
     const newToyCollection = client
       .db("toyMarketPlace")
       .collection("newToySuperHero");
 
-    app.get("/toySuperHero", async (req, res) => {
-      const cursor = toyCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
-    });
     app.get("/newToySuperHero", async (req, res) => {
       console.log(req.query.email);
       let query = {};
@@ -48,18 +40,6 @@ async function run() {
       const id = req.params.id;
       console.log(id)
       const query = { _id: new ObjectId(id) };
-      const options = {
-        projection: {
-          toyName: 1,
-          imageURL: 1,
-          price: 1,
-          ratings: 1,
-          sellerName: 1,
-          email: 1,
-          details: 1,
-          quantity: 1,
-        },
-      };
       const result = await  newToyCollection.findOne(query);
       res.send(result);
       console.log(result)
@@ -70,6 +50,39 @@ async function run() {
       const result = await newToyCollection.insertOne(newToy);
       res.send(result);
     });
+    app.put("/newToySuperHero/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id)
+      const updateToy = req.body;
+      console.log(updateToy)
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedToy = {
+        $set: {
+          image:updateToy.image,
+          name:updateToy.name,
+          sellerName:updateToy.sellerName,
+          email:updateToy.email,
+          subCategory:updateToy.subCategory,
+          price:updateToy.price,
+          ratings:updateToy.ratings,
+          quantity:updateToy.quantity,
+          details:updateToy.details
+        },
+      };
+      const result = await newToyCollection.updateOne(
+        filter,
+        updatedToy,
+        options
+      );
+      res.send(result);
+    });
+    app.delete("/newToySuperHero/:id",async(req,res)=>{
+      const id=req.params.id;
+      const query={_id: new ObjectId(id)}
+      const result=await newToyCollection.deleteOne(query)
+      res.send(result)
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
